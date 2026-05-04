@@ -13,6 +13,16 @@ config_version=5
 config/name="tactical_rpg"
 config/features=PackedStringArray("4.6", "Forward Plus")
 
+[autoload]
+
+MCPScreenshot="*res://addons/godot_mcp/mcp_screenshot_service.gd"
+MCPInputService="*res://addons/godot_mcp/mcp_input_service.gd"
+MCPGameInspector="*res://addons/godot_mcp/mcp_game_inspector_service.gd"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
+
 [physics]
 
 3d/physics_engine="Jolt Physics"
