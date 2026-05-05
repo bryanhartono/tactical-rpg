@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://bmeuyr34k2p7k"]
+
+[ext_resource type="Script" uid="uid://cvnhmpcmqpxvn" path="res://scenes/battle/ui/debug_hud.gd" id="1_fls5u"]
+
+[node name="DebugHUD" type="Control" unique_id=448932418]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("1_fls5u")
+
+[node name="FPSLabel" type="Label" parent="." unique_id=449059814]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 200.0
+offset_bottom = 36.0
+text = "FPS: --"

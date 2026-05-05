@@ -1,0 +1,45 @@
+[gd_scene format=3 uid="uid://dqb602afqsykq"]
+
+[ext_resource type="Script" uid="uid://dh8hnse14q8ed" path="res://scenes/battle/battle.gd" id="1_ffvsa"]
+[ext_resource type="Script" uid="uid://g62nwi7pcck0" path="res://scenes/battle/battle_manager.gd" id="2_xd4uy"]
+[ext_resource type="PackedScene" uid="uid://bmeuyr34k2p7k" path="res://scenes/battle/ui/debug_hud.tscn" id="3_0yh6x"]
+[ext_resource type="Script" uid="uid://cvnhmpcmqpxvn" path="res://scenes/battle/ui/debug_hud.gd" id="4_h0kxc"]
+
+[node name="BattleScene" type="Node" unique_id=1544469689]
+script = ExtResource("1_ffvsa")
+
+[node name="Board" type="Node3D" parent="." unique_id=989585225]
+
+[node name="GridOverlay" type="Node3D" parent="Board" unique_id=557800132]
+
+[node name="UnitsLayer" type="Node3D" parent="Board" unique_id=1904282471]
+
+[node name="BattleCamera" type="Node3D" parent="." unique_id=969319725]
+
+[node name="Pivot" type="Node3D" parent="BattleCamera" unique_id=1705868912]
+
+[node name="Camera3D" type="Camera3D" parent="BattleCamera/Pivot" unique_id=462175777]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -10)
+
+[node name="BattleManager" type="Node" parent="." unique_id=2134427092]
+script = ExtResource("2_xd4uy")
+
+[node name="BattleUI" type="CanvasLayer" parent="." unique_id=1883434911]
+
+[node name="DebugHUD" type="Control" parent="BattleUI" unique_id=448932418 instance=ExtResource("3_0yh6x")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4_h0kxc")
+
+[node name="FPSLabel" type="Label" parent="BattleUI/DebugHUD" unique_id=449059814]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 200.0
+offset_bottom = 36.0
+text = "FPS: --"
