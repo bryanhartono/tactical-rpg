@@ -3,8 +3,8 @@
 > Living status document. Updated by Claude Code at the end of every session per `CLAUDE.md` instructions.
 
 **Last updated:** 2026-05-05 — Phase 0 complete, awaiting user review before Phase 1.
-**Active phase:** Phase 0 — Project Setup and Architectural Skeleton (✅ complete, pending review)
-**Active task file:** `tasks/phase_0_tasks.md`
+**Active phase:** Phase 0 — Project Setup and Architectural Skeleton (✅ complete, ✅ reviewed)
+**Active task file:** `tasks/phase_1_tasks.md`
 
 ---
 
@@ -27,7 +27,7 @@ approve Phase 1 or send corrections.
 
 ## Next Up
 
-- **Phase 1** — Bare grid combat (task file TBD; see GDD §12.1).
+- **Phase 1** — Bare grid combat (task file uploaded; see GDD §12.1).
 
 ---
 
