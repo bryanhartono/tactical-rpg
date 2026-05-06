@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="StyleDefinition" format=3 uid="uid://djx0q8x6e0pdy"]
+
+[ext_resource type="Script" uid="uid://c5vdtmpike7cc" path="res://scripts/data/skill.gd" id="1_43byr"]
+[ext_resource type="Script" uid="uid://sqpe1mpbci8b" path="res://scripts/data/style_definition.gd" id="2_vecrm"]
+
+[resource]
+script = ExtResource("2_vecrm")
+id = 1
+display_name = "Swordsman"
+base_hp = 25
+base_atk = 8
+base_def = 5
+base_skill = 5
+base_speed = 6
+base_luck = 3
+growth_hp = 60
+growth_atk = 50
+growth_def = 30
+growth_skill = 40
+growth_speed = 35
+growth_luck = 25
+allowed_weapon_categories = {
+0: 0
+}

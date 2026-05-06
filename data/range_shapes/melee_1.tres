@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RangeShape" format=3 uid="uid://cxd1ah6f4rra2"]
+
+[ext_resource type="Script" uid="uid://dyd3audxjxrjk" path="res://scripts/data/range_shape.gd" id="1_ydkpr"]
+
+[resource]
+script = ExtResource("1_ydkpr")
+id = 1
+name = "Melee Range 1"
+num_cols = 3
+cells = PackedInt32Array(-1, 1, -1, 1, 101, 1, -1, 1, -1)

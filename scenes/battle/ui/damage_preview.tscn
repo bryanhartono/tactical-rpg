@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://bgxk56trllikf"]
+
+[ext_resource type="Script" uid="uid://12a2jq4wxmfb" path="res://scenes/battle/ui/damage_preview.gd" id="1_dj45i"]
+
+[node name="DamagePreview" type="Control" unique_id=987859348]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_dj45i")
+
+[node name="Panel" type="PanelContainer" parent="." unique_id=1821434172]
+layout_mode = 0
+
+[node name="Label" type="Label" parent="Panel" unique_id=1970212040]
+layout_mode = 2
+text = "Dmg: --"

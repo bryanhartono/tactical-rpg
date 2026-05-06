@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="CharacterDefinition" format=3 uid="uid://cn8tt44fux7lg"]
+
+[ext_resource type="Resource" uid="uid://dflu2i2s4esnw" path="res://data/weapons/iron_sword.tres" id="1_nt78b"]
+[ext_resource type="Resource" uid="uid://djx0q8x6e0pdy" path="res://data/classes/swordsman.tres" id="2_plb0o"]
+[ext_resource type="Script" uid="uid://b568gcjyxf3l4" path="res://scripts/data/character_definition.gd" id="3_uhtlg"]
+
+[resource]
+script = ExtResource("3_uhtlg")
+id = 1
+display_name = "Aria"
+default_style = ExtResource("2_plb0o")
+default_main_weapon = ExtResource("1_nt78b")

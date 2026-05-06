@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="Weapon" format=3 uid="uid://dflu2i2s4esnw"]
+
+[ext_resource type="Script" uid="uid://cok446s3vg68u" path="res://scripts/data/weapon.gd" id="1_6bull"]
+
+[resource]
+script = ExtResource("1_6bull")
+id = 1001
+name = "Iron Sword"
+range_shape_id = 1
+initial_power = 5
+initial_hit = 90
+initial_weight = 3
+limit_power = 5
+limit_hit = 90
+limit_weight = 3
+max_durability = 30

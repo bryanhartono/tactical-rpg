@@ -30,7 +30,9 @@
       "mcp__godot-mcp-pro__get_performance_monitors",
       "Bash(cp -R /tmp/gut_clone/addons/gut \"/Users/bryanhartono/Documents/Game Dev/Godot/Projects/Personal/tactical-rpg/addons/gut\")",
       "Bash(rm -rf /tmp/gut_clone)",
-      "Bash(/Applications/Godot.app/Contents/MacOS/Godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit)"
+      "Bash(/Applications/Godot.app/Contents/MacOS/Godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit)",
+      "mcp__godot-mcp-pro__execute_game_script",
+      "mcp__godot-mcp-pro__simulate_mouse_click"
     ]
   },
   "enabledMcpjsonServers": [

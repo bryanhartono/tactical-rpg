@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://nx4ed5sbrwyt"]
+
+[ext_resource type="Script" uid="uid://bk1hboxbmejfk" path="res://scenes/battle/ui/action_menu.gd" id="1_v3eju"]
+
+[node name="ActionMenu" type="Control" unique_id=1765447981]
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+script = ExtResource("1_v3eju")
+
+[node name="Panel" type="PanelContainer" parent="." unique_id=898036327]
+layout_mode = 0
+
+[node name="Buttons" type="VBoxContainer" parent="Panel" unique_id=1424895176]
+layout_mode = 2
+
+[node name="MoveButton" type="Button" parent="Panel/Buttons" unique_id=1689568875]
+layout_mode = 2
+text = "Move"
+
+[node name="AttackButton" type="Button" parent="Panel/Buttons" unique_id=1906440505]
+layout_mode = 2
+text = "Attack"
+
+[node name="WaitButton" type="Button" parent="Panel/Buttons" unique_id=1220359232]
+layout_mode = 2
+text = "Wait"
+
+[node name="CancelButton" type="Button" parent="Panel/Buttons" unique_id=579231551]
+layout_mode = 2
+text = "Cancel"

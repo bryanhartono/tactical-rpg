@@ -1,0 +1,29 @@
+[gd_scene format=3 uid="uid://cd87bxfe75b4a"]
+
+[ext_resource type="Script" uid="uid://dg00ew3il7muh" path="res://scenes/battle/ui/end_of_battle.gd" id="1_icjh2"]
+
+[node name="EndOfBattle" type="Control" unique_id=1265580297]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_icjh2")
+
+[node name="Panel" type="PanelContainer" parent="." unique_id=1677880284]
+layout_mode = 0
+anchor_left = 0.35
+anchor_top = 0.4
+anchor_right = 0.65
+anchor_bottom = 0.6
+
+[node name="VBox" type="VBoxContainer" parent="Panel" unique_id=580409783]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Panel/VBox" unique_id=1412246401]
+layout_mode = 2
+text = "Battle Ended"
+horizontal_alignment = 1
+
+[node name="RestartButton" type="Button" parent="Panel/VBox" unique_id=1949932213]
+layout_mode = 2
+text = "Restart"

@@ -1,9 +1,17 @@
 [gd_scene format=3 uid="uid://dqb602afqsykq"]
 
 [ext_resource type="Script" uid="uid://dh8hnse14q8ed" path="res://scenes/battle/battle.gd" id="1_ffvsa"]
+[ext_resource type="Script" uid="uid://bqj155tvo55jd" path="res://scripts/battle/view/board_view_3d.gd" id="2_h0kxc"]
 [ext_resource type="Script" uid="uid://g62nwi7pcck0" path="res://scenes/battle/battle_manager.gd" id="2_xd4uy"]
 [ext_resource type="PackedScene" uid="uid://bmeuyr34k2p7k" path="res://scenes/battle/ui/debug_hud.tscn" id="3_0yh6x"]
-[ext_resource type="Script" uid="uid://cvnhmpcmqpxvn" path="res://scenes/battle/ui/debug_hud.gd" id="4_h0kxc"]
+[ext_resource type="Script" uid="uid://cfqxnmund66gh" path="res://scripts/battle/input/tile_input_controller.gd" id="5_h0kxc"]
+[ext_resource type="PackedScene" uid="uid://nx4ed5sbrwyt" path="res://scenes/battle/ui/action_menu.tscn" id="5_py4tk"]
+[ext_resource type="Script" uid="uid://bk1hboxbmejfk" path="res://scenes/battle/ui/action_menu.gd" id="6_agsc7"]
+[ext_resource type="PackedScene" uid="uid://bgxk56trllikf" path="res://scenes/battle/ui/damage_preview.tscn" id="7_oiw7q"]
+[ext_resource type="Script" uid="uid://12a2jq4wxmfb" path="res://scenes/battle/ui/damage_preview.gd" id="8_fisqk"]
+[ext_resource type="Script" uid="uid://dm5jcfxb6od6p" path="res://scripts/battle/input/player_phase_controller.gd" id="8_oiw7q"]
+[ext_resource type="PackedScene" uid="uid://cd87bxfe75b4a" path="res://scenes/battle/ui/end_of_battle.tscn" id="9_mxe8n"]
+[ext_resource type="Script" uid="uid://dg00ew3il7muh" path="res://scenes/battle/ui/end_of_battle.gd" id="10_icoan"]
 
 [node name="BattleScene" type="Node" unique_id=1544469689]
 script = ExtResource("1_ffvsa")
@@ -11,6 +19,7 @@ script = ExtResource("1_ffvsa")
 [node name="Board" type="Node3D" parent="." unique_id=989585225]
 
 [node name="GridOverlay" type="Node3D" parent="Board" unique_id=557800132]
+script = ExtResource("2_h0kxc")
 
 [node name="UnitsLayer" type="Node3D" parent="Board" unique_id=1904282471]
 
@@ -26,20 +35,93 @@ script = ExtResource("2_xd4uy")
 
 [node name="BattleUI" type="CanvasLayer" parent="." unique_id=1883434911]
 
-[node name="DebugHUD" type="Control" parent="BattleUI" unique_id=448932418 instance=ExtResource("3_0yh6x")]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+[node name="DebugHUD" parent="BattleUI" unique_id=448932418 instance=ExtResource("3_0yh6x")]
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
-script = ExtResource("4_h0kxc")
 
-[node name="FPSLabel" type="Label" parent="BattleUI/DebugHUD" unique_id=449059814]
+[node name="FPSLabel2" type="Label" parent="BattleUI/DebugHUD" unique_id=449059814]
 layout_mode = 0
 offset_left = 12.0
 offset_top = 8.0
 offset_right = 200.0
 offset_bottom = 36.0
 text = "FPS: --"
+
+[node name="ActionMenu" type="Control" parent="BattleUI" unique_id=1765447981 instance=ExtResource("5_py4tk")]
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+script = ExtResource("6_agsc7")
+
+[node name="Panel" type="PanelContainer" parent="BattleUI/ActionMenu" unique_id=898036327]
+layout_mode = 0
+
+[node name="Buttons" type="VBoxContainer" parent="BattleUI/ActionMenu/Panel" unique_id=1424895176]
+layout_mode = 2
+
+[node name="MoveButton" type="Button" parent="BattleUI/ActionMenu/Panel/Buttons" unique_id=1689568875]
+layout_mode = 2
+text = "Move"
+
+[node name="AttackButton" type="Button" parent="BattleUI/ActionMenu/Panel/Buttons" unique_id=1906440505]
+layout_mode = 2
+text = "Attack"
+
+[node name="WaitButton" type="Button" parent="BattleUI/ActionMenu/Panel/Buttons" unique_id=1220359232]
+layout_mode = 2
+text = "Wait"
+
+[node name="CancelButton" type="Button" parent="BattleUI/ActionMenu/Panel/Buttons" unique_id=579231551]
+layout_mode = 2
+text = "Cancel"
+
+[node name="DamagePreview" type="Control" parent="BattleUI" unique_id=987859348 instance=ExtResource("7_oiw7q")]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("8_fisqk")
+
+[node name="Panel" type="PanelContainer" parent="BattleUI/DamagePreview" unique_id=1821434172]
+layout_mode = 0
+
+[node name="Label" type="Label" parent="BattleUI/DamagePreview/Panel" unique_id=1970212040]
+layout_mode = 2
+text = "Dmg: --"
+
+[node name="EndOfBattle" type="Control" parent="BattleUI" unique_id=1265580297 instance=ExtResource("9_mxe8n")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("10_icoan")
+
+[node name="Panel" type="PanelContainer" parent="BattleUI/EndOfBattle" unique_id=1677880284]
+layout_mode = 0
+anchor_left = 0.35
+anchor_top = 0.4
+anchor_right = 0.65
+anchor_bottom = 0.6
+
+[node name="VBox" type="VBoxContainer" parent="BattleUI/EndOfBattle/Panel" unique_id=580409783]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="BattleUI/EndOfBattle/Panel/VBox" unique_id=1412246401]
+layout_mode = 2
+text = "Battle Ended"
+horizontal_alignment = 1
+
+[node name="RestartButton" type="Button" parent="BattleUI/EndOfBattle/Panel/VBox" unique_id=1949932213]
+layout_mode = 2
+text = "Restart"
+
+[node name="TileInputController" type="Node" parent="." unique_id=695044648]
+script = ExtResource("5_h0kxc")
+
+[node name="PlayerPhaseController" type="Node" parent="." unique_id=2053548140]
+script = ExtResource("8_oiw7q")
+manager_path = NodePath("../BattleManager")
+input_path = NodePath("../TileInputController")
+board_view_path = NodePath("../Board/GridOverlay")
+action_menu_path = NodePath("../BattleUI/ActionMenu")
+damage_preview_path = NodePath("../BattleUI/DamagePreview")
