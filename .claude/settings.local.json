@@ -32,7 +32,8 @@
       "Bash(rm -rf /tmp/gut_clone)",
       "Bash(/Applications/Godot.app/Contents/MacOS/Godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit)",
       "mcp__godot-mcp-pro__execute_game_script",
-      "mcp__godot-mcp-pro__simulate_mouse_click"
+      "mcp__godot-mcp-pro__simulate_mouse_click",
+      "mcp__godot-mcp-pro__simulate_key"
     ]
   },
   "enabledMcpjsonServers": [

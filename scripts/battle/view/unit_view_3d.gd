@@ -1,41 +1,96 @@
 class_name UnitView3D extends Node3D
-## Visual representation of a CharacterUnit. Listens to that unit's local signals.
-## Phase 1: capsule placeholder. Phase 2: pixel sprite billboard.
-## See docs/gdd.md §6.1 (Phase 2 target), §10.1 (principle 4 — view subscribes to gameplay).
+## Visual representation of a CharacterUnit using an AnimatedSprite3D billboard.
+## Phase 2 (post-redesign): pixel sprite anchored at FEET so the character stands
+## centered on its tile from any camera angle. HP / name now live in a right-side
+## UI panel (UnitStatusPanel), not above the sprite. See docs/gdd.md §6.1, §6.4.
 
-const PLAYER_COLOR: Color = Color(0.30, 0.55, 0.95)
-const ENEMY_COLOR: Color = Color(0.90, 0.30, 0.30)
-const Y_OFFSET: float = 0.5
+const STEP_DURATION: float = 0.15  # seconds per tile-step in the move tween
 
 @export var unit: CharacterUnit
+@export var sprite_frames_resource: SpriteFrames
 
-@onready var _mesh: MeshInstance3D = $Mesh
-@onready var _hp_label: Label3D = $HPLabel
+@onready var _sprite: AnimatedSprite3D = $AnimatedSprite3D
+# Shadow Decal is in the scene but doesn't need a script reference — it follows the
+# parent's transform automatically.
+
+## Emitted when the latest play()-driven animation (move walk, attack, hit, death)
+## finishes. PlayerPhaseController and AIController await this between commands.
+signal animation_complete
 
 func _ready() -> void:
 	if unit == null:
 		push_error("UnitView3D has no unit assigned")
 		return
+	if sprite_frames_resource != null:
+		_sprite.sprite_frames = sprite_frames_resource
 	unit.moved.connect(_on_moved)
 	unit.hp_changed.connect(_on_hp_changed)
 	unit.died.connect(_on_died)
-	position = Vector3(unit.grid_position.x, Y_OFFSET, unit.grid_position.y)
+	unit.facing_changed.connect(_on_facing_changed)
+	unit.attacked.connect(_on_attacked)
+	# Feet anchored at tile center on the ground (no Y offset; sprite.offset.y handles
+	# the visual lift so the bottom-center of the image draws at this position).
+	position = Vector3(unit.grid_position.x, 0.0, unit.grid_position.y)
 	_refresh_visual()
+	play("idle")
 
 func _refresh_visual() -> void:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = PLAYER_COLOR if unit.is_player() else ENEMY_COLOR
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_mesh.material_override = mat
-	_hp_label.text = "%s\n%d/%d" % [unit.display_name, unit.current_hp, unit.max_hp]
+	# Flip horizontally if facing west (negative X). See GDD §6.1.
+	_sprite.flip_h = unit.facing.x < 0
 
-func _on_moved(_from: Vector2i, to: Vector2i) -> void:
-	# Phase 1: instant teleport. Phase 2: tween over the path.
-	position = Vector3(to.x, Y_OFFSET, to.y)
+func play(anim_name: String) -> void:
+	if _sprite.sprite_frames == null:
+		return
+	if not _sprite.sprite_frames.has_animation(anim_name):
+		push_warning("UnitView3D: missing animation '%s' on %s" % [anim_name, unit.display_name])
+		return
+	_sprite.play(anim_name)
 
-func _on_hp_changed(_old_hp: int, _new_hp: int) -> void:
-	_hp_label.text = "%s\n%d/%d" % [unit.display_name, unit.current_hp, unit.max_hp]
+# ----------------------------------------------------------------------------
+# Signal handlers
+# ----------------------------------------------------------------------------
+
+func _on_moved(_from: Vector2i, _to: Vector2i) -> void:
+	var path := unit.last_move_path
+	if path.is_empty() or path.size() == 1:
+		position = Vector3(_to.x, 0.0, _to.y)
+		animation_complete.emit()
+		return
+	play("walk")
+	var tween := create_tween()
+	for i in range(1, path.size()):
+		var step_pos := Vector3(path[i].x, 0.0, path[i].y)
+		tween.tween_property(self, "position", step_pos, STEP_DURATION).set_trans(Tween.TRANS_LINEAR)
+	await tween.finished
+	if is_instance_valid(unit) and unit.is_alive():
+		play("idle")
+	animation_complete.emit()
+
+func _on_facing_changed(_new_facing: Vector2i) -> void:
+	_refresh_visual()
+
+func _on_hp_changed(old_hp: int, new_hp: int) -> void:
+	# Hit animation only on damage and only if the unit's still alive — death is
+	# handled by _on_died. The HP label is gone; UnitStatusPanel listens directly to
+	# the unit's hp_changed signal for the on-screen number.
+	if new_hp < old_hp and new_hp > 0 and _sprite.sprite_frames != null \
+			and _sprite.sprite_frames.has_animation("hit"):
+		play("hit")
+		await _sprite.animation_finished
+		if is_instance_valid(unit) and unit.is_alive():
+			play("idle")
+
+func _on_attacked(_target: CharacterUnit) -> void:
+	if _sprite.sprite_frames != null and _sprite.sprite_frames.has_animation("attack"):
+		play("attack")
+		await _sprite.animation_finished
+		if is_instance_valid(unit) and unit.is_alive():
+			play("idle")
+	animation_complete.emit()
 
 func _on_died() -> void:
-	# Phase 2 will play a death animation first.
+	if _sprite.sprite_frames != null and _sprite.sprite_frames.has_animation("death"):
+		play("death")
+		await _sprite.animation_finished
+	animation_complete.emit()
 	queue_free()

@@ -39,8 +39,9 @@ func execute() -> void:
 	origin_tile.occupant_id = -1
 	dest_tile.occupant_id = unit.unit_id
 	unit.grid_position = destination
-	# Face along the last step of the path. Phase 1 has no separate "face" UX yet;
-	# T15 surfaces a face-after-action prompt when the spec calls for it.
+	# Stamp the path on the unit so UnitView3D (Phase 2) can walk along it.
+	unit.last_move_path = _path.duplicate()
+	# Face along the last step of the path.
 	if _path.size() >= 2:
 		unit.facing = _path[-1] - _path[-2]
 		unit.facing_changed.emit(unit.facing)

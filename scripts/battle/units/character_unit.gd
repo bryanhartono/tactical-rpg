@@ -46,6 +46,17 @@ signal moved(from_tile: Vector2i, to_tile: Vector2i)
 signal facing_changed(new_facing: Vector2i)
 ## Emitted exactly once when current_hp first reaches 0.
 signal died
+## Emitted from AttackCommand BEFORE damage resolves on the target. The view layer
+## listens to play the attacker's attack animation. Bus-side observers should listen
+## to CombatEventBus.damage_dealt instead — this signal is intentionally local.
+signal attacked(target: CharacterUnit)
+
+# Phase 2 view affordance: the most recent move's path, in tile coords (origin first,
+# destination last). MoveCommand sets this before emitting `moved`; UnitView3D walks
+# along it. Documented as a deliberate small leak of view concerns into the gameplay
+# node — the cleaner "pass via signal payload" alternative was considered and rejected
+# because the signal is also used by RollbackService etc. that don't need the path.
+var last_move_path: Array[Vector2i] = []
 
 # ----------------------------------------------------------------------------
 # Queries

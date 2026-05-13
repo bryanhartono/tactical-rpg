@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://q08b3y6pc8l"]
+
+[ext_resource type="Script" uid="uid://b3n553fkfrhbq" path="res://scenes/battle/vfx/damage_popup.gd" id="1_5lg63"]
+
+[node name="DamagePopup" type="Label3D" unique_id=477233446]
+billboard = 2
+no_depth_test = true
+text = "0"
+font_size = 48
+outline_size = 6
+script = ExtResource("1_5lg63")

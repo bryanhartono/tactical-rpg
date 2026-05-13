@@ -16,17 +16,24 @@ enum State { IDLE, UNIT_SELECTED, TARGETING_MOVE, TARGETING_ATTACK }
 @export var board_view_path: NodePath
 @export var action_menu_path: NodePath
 @export var damage_preview_path: NodePath
+@export var status_panel_path: NodePath
 
 var _manager: BattleManager
 var _input: TileInputController
 var _board_view: BoardView3D
 var _menu: ActionMenu
 var _damage_preview: Node           # DamagePreview; typed loose to avoid load-order issues
+var _status_panel: Node             # UnitStatusPanel; loose-typed for the same reason
 
 var _state: State = State.IDLE
 var _selected: CharacterUnit
 var _move_targets: Array[Vector2i] = []
 var _attack_targets: Array[CharacterUnit] = []
+
+## Public accessor for the currently-selected unit. Used by CameraInputController so it
+## doesn't have to reach into `_selected` directly (private-by-convention).
+func get_selected_unit() -> CharacterUnit:
+	return _selected
 
 func _ready() -> void:
 	_manager = get_node(manager_path)
@@ -35,6 +42,8 @@ func _ready() -> void:
 	_menu = get_node(action_menu_path)
 	if damage_preview_path != NodePath(""):
 		_damage_preview = get_node(damage_preview_path)
+	if status_panel_path != NodePath(""):
+		_status_panel = get_node(status_panel_path)
 
 	_input.tile_clicked.connect(_on_tile_clicked)
 	_input.unit_clicked.connect(_on_unit_clicked)
@@ -101,6 +110,7 @@ func _on_move_chosen() -> void:
 		if tile != _selected.grid_position:
 			_move_targets.append(tile)
 	_board_view.clear_highlights()
+	_board_view.set_grid_visible(true)
 	_board_view.highlight_tiles(_move_targets, _MOVE_COLOR)
 
 func _on_attack_chosen() -> void:
@@ -110,6 +120,7 @@ func _on_attack_chosen() -> void:
 	_menu.hide_menu()
 	_attack_targets = _find_attack_targets(_selected)
 	_board_view.clear_highlights()
+	_board_view.set_grid_visible(true)
 	var tiles: Array[Vector2i] = []
 	for u in _attack_targets:
 		tiles.append(u.grid_position)
@@ -129,16 +140,28 @@ func _resolve_move(grid: Vector2i) -> void:
 	var ok := CommandQueue.submit(MoveCommand.new(_manager.board, _selected, grid))
 	_board_view.clear_highlights()
 	if ok and not _selected.has_acted:
-		# Move alone doesn't end the turn — re-show the menu so the player can attack
-		# or wait. (GDD §4.3: Move + Action + Face.)
-		_select_unit(_selected)
+		# Await the visual move so the menu doesn't pop while the unit is mid-stride.
+		var view: UnitView3D = _manager.get_view_for(_selected.unit_id)
+		if view != null:
+			await view.animation_complete
+		# Re-select to refresh menu (move alone doesn't end the turn — Move + Action + Face).
+		if is_instance_valid(_selected) and _selected.is_alive() and not _selected.has_acted:
+			_select_unit(_selected)
+		else:
+			_to_idle()
 	else:
 		_to_idle()
 	_maybe_end_phase()
 
 func _resolve_attack(target: CharacterUnit) -> void:
 	CommandQueue.submit(AttackCommand.new(_manager.board, _selected, target))
-	_after_action_committed()
+	_board_view.clear_highlights()
+	# Hold the menu / state transition until the attack animation resolves.
+	var view: UnitView3D = _manager.get_view_for(_selected.unit_id)
+	if view != null:
+		await view.animation_complete
+	_to_idle()
+	_maybe_end_phase()
 
 func _after_action_committed() -> void:
 	_board_view.clear_highlights()
@@ -153,10 +176,12 @@ func _select_unit(unit: CharacterUnit) -> void:
 	_selected = unit
 	_state = State.UNIT_SELECTED
 	_board_view.clear_highlights()
-	var screen_pos := _world_to_screen(unit.grid_position)
+	_board_view.set_grid_visible(false)
 	var can_move := not unit.has_acted
 	var can_attack := not unit.has_acted and not _find_attack_targets(unit).is_empty()
-	_menu.show_for_unit(unit, screen_pos, can_move, can_attack)
+	_menu.show_for_unit(unit, can_move, can_attack)
+	if _status_panel != null:
+		_status_panel.show_for_unit(unit)
 
 func _to_unit_selected_or_idle() -> void:
 	# Cancel from a targeting state pops back to the menu if the unit's still actionable;
@@ -173,7 +198,10 @@ func _to_idle() -> void:
 	_move_targets.clear()
 	_attack_targets.clear()
 	_menu.hide_menu()
+	if _status_panel != null:
+		_status_panel.hide_panel()
 	_board_view.clear_highlights()
+	_board_view.set_grid_visible(false)
 
 func _maybe_end_phase() -> void:
 	if _manager.all_players_acted():
@@ -198,11 +226,6 @@ func _find_attack_targets(unit: CharacterUnit) -> Array[CharacterUnit]:
 			result.append(u)
 	return result
 
-func _world_to_screen(grid: Vector2i) -> Vector2:
-	var cam := _manager.get_node("../BattleCamera/Pivot/Camera3D") as Camera3D
-	var world := Vector3(grid.x, 0.5, grid.y)
-	return cam.unproject_position(world)
-
 # ----------------------------------------------------------------------------
 # Damage preview hover (Phase 1: poll the cursor each frame in TARGETING_ATTACK)
 # ----------------------------------------------------------------------------
@@ -226,14 +249,21 @@ func _hovered_target() -> CharacterUnit:
 	var direction := cam.project_ray_normal(mouse_pos)
 	var space := cam.get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * 100.0)
+	query.collide_with_areas = true
 	var hit := space.intersect_ray(query)
 	if hit.is_empty():
 		return null
 	var collider: Object = hit.get("collider")
-	if collider == null or not collider.has_meta("grid_pos"):
+	if collider == null:
 		return null
-	var grid: Vector2i = collider.get_meta("grid_pos")
-	var u := _manager.board.get_unit_at(grid)
-	if u != null and _attack_targets.has(u):
-		return u
+	if collider.has_meta("unit_id"):
+		var u := _manager.board.units.get(collider.get_meta("unit_id")) as CharacterUnit
+		if u != null and _attack_targets.has(u):
+			return u
+		return null
+	if collider.has_meta("grid_pos"):
+		var grid: Vector2i = collider.get_meta("grid_pos")
+		var u := _manager.board.get_unit_at(grid)
+		if u != null and _attack_targets.has(u):
+			return u
 	return null

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="CameraSetting" format=3 uid="uid://blrsplkn75sjm"]
+
+[ext_resource type="Script" uid="uid://ctdxgajckpcik" path="res://scripts/data/camera_setting.gd" id="1_5nb53"]
+
+[resource]
+script = ExtResource("1_5nb53")
+id = 2
+display_name = "Overview"
+min_distance = 6.0
+max_distance = 12.0
+initial_distance = 8.0
+rotation_angles = Vector3(-70, 0, 0)

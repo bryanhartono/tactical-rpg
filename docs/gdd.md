@@ -39,6 +39,8 @@ A single-player tactical RPG with the satisfying grid combat of *Final Fantasy T
 
 **Pillar 3 — Pixel sprites, kinetic world.** Sprites are pixel-art chibi billboards on real 3D terrain with corner-height variation. Multi-mode camera shifts framing and pitch between presets to keep the visual experience fresh without breaking the side-profile sprite convention. The contrast — flat pixel character on living 3D ground — is the visual identity.
 
+The technique is commonly called **HD-2D** — high-definition 2D, popularized by *Octopath Traveler* and seen in *Triangle Strategy* and *Aster Tatariqus*. Sprites are crisply pixel-art (nearest-neighbor filtering, no anti-aliasing) while the world around them is smoothly-shaded 3D (linear filtering, MSAA, ambient lighting, bloom).
+
 **Pillar 4 — Forgiving but punishing.** Three rewinds per battle (snapshot-based). Every turn matters, but a misclick or a missed math doesn't end the run. Difficulty comes from the encounter design, not from the UI.
 
 ### 1.3 Anti-pillars (what we are NOT making)
@@ -379,7 +381,7 @@ Bond drives Bond Action probability (§5.10) and unlocks per-pair dialogue / sup
 - Death (one-shot, despawns)
 - Victory pose (one-shot, post-battle)
 
-**Direction count: 1 unique direction per state (E, side-profile), with horizontal flip for W.** No N/S sprites. The camera is fixed in horizontal angle (no free yaw rotation by the player, see §6.3), so units are always seen in side-profile. Player units conventionally face east; enemy units conventionally face west (rendered as flipped E sprites). When a unit's gameplay-facing changes (after movement, after action), the visual sprite flips accordingly to face the appropriate side.
+**Direction count: 1 unique direction per state (E, side-profile), with horizontal flip for W.** No N/S sprites. *Aster Tatariqus* uses this same compromise — its sprites are side-profile flat billboards regardless of camera pitch (visible in its 50°, 70°, and 90° presets), and the chibi proportions (huge head, small body) keep them readable from any angle even though they don't show top-of-head detail. The "facing arrow decal" (§6.1) communicates gameplay-facing without needing N/S sprite variants. Player units conventionally face east; enemy units conventionally face west (rendered as flipped E sprites). When a unit's gameplay-facing changes (after movement, after action), the visual sprite flips accordingly.
 
 **Visual facing vs gameplay facing.** Because we only have side-profile sprites, the visual sprite cannot show all four cardinal facings. Gameplay facing (used for damage modifiers, see §5.6) is tracked separately on the unit and visualized via a **facing arrow decal** rendered on the ground under the unit, pointing in the gameplay-facing direction. The sprite itself only flips left/right based on whether the gameplay facing has an east or west component. This is the same compromise Aster ships with.
 
@@ -403,13 +405,11 @@ Multi-mode camera with smooth transitions between presets. See §10.5 for archit
 
 | Mode | Distance | Pitch | Use case |
 |---|---|---|---|
-| **Tactical** | far (12–18u) | 50° | Default — broad battlefield view, side-profile units readable |
-| **Close** | medium (8–12u) | 40° | Closer view, focuses on action area |
-| **Action** | near (5–8u) | 30° | Cinematic low angle for combat moments |
+| **Tactical** | medium-far (10–14u) | ~50° | Default — covers most of the board, sprites read clearly |
+| **Overview** | far (14–18u) | ~70° | Wider battlefield view, helps with positioning + planning |
+| **Top-down** | far (14–18u) | ~90° | Pure overhead, useful for unit placement and strategic overview |
 
-All presets use a similar moderate pitch range (30°–50°) because steeper top-down angles don't read well with side-profile-only sprites. The pitch differences are subtle but distinct enough to feel like genuinely different framings. A pure top-down preset is **not viable** with single-direction sprites and is excluded.
-
-Player cycles via key (Tab on desktop) or button. Each preset remembers its own zoom level.
+All three presets work with single-direction sprites because chibi proportions remain readable at any camera pitch — *Aster Tatariqus* validates this empirically. The pitch differences between presets are deliberate and large (50° → 70° → 90°), giving each mode a distinctly different feel rather than three similar ones. Players cycle via `Tab`. Each preset remembers its own zoom level (per-preset `user_distance`).
 
 **Camera input:**
 - Pan: middle-mouse drag, WASD, edge-scroll (off by default), or two-finger drag on touch.
@@ -981,7 +981,7 @@ Direct port from Aster's `BattleConst.json` and `BattleLogicConst.json`. Use the
 
 **Terrains (4 for the slice):** Plain, Forest, Water (impassable to non-fly), Cliff (impassable to non-fly).
 
-**Camera presets (2 for the slice):** Tactical (default) and Action. Close added in Phase 9.
+**Camera presets (3 for the slice):** Tactical (default), Overview, Top-down — all three ship in Phase 2.
 
 **Visual facing indicator:** 1 simple arrow decal asset (rendered on the ground under each unit), tinted by team color. Used because side-profile-only sprites cannot show all four cardinal facings (see §6.1).
 
@@ -1058,6 +1058,10 @@ These are decisions still owed before or during early implementation. Senior dev
 5. **Multi-Style units** (one character can change Style). v1 says no. Could be added late; depends on design value during playtests.
 6. **Working title and visual identity.** Out of scope for engineering kickoff; design/marketing track.
 7. **Music / SFX strategy.** Royalty-free library for vertical slice; commissioned post-slice. Composer not yet engaged.
+
+#### Resolved during implementation
+
+- **Camera presets revised** (Phase 2 review). Original GDD specified Tactical 50° / Close 40° / Action 30°. Validated against *Aster Tatariqus* gameplay screenshots and revised to Tactical 50° / Overview 70° / Top-down 90°. The empirical evidence — Aster's chibi sprites read fine at 90° — invalidates the original "no top-down" rule. Revised three-preset set ships in Phase 2 (originally planned for Phase 9).
 
 ### 13.3 Things explicitly DEFERRED (not cut, not in v1)
 - Story / narrative scenes between battles.

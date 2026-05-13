@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://cyrsyd3r58rq6"]
+
+[ext_resource type="Script" uid="uid://w0xj34cfyo2g" path="res://scenes/battle/ui/unit_status_panel.gd" id="1_383uu"]
+
+[node name="UnitStatusPanel" type="Control" unique_id=504820727]
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -312.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = 164.0
+mouse_filter = 2
+script = ExtResource("1_383uu")
+
+[node name="Panel" type="PanelContainer" parent="." unique_id=912231961]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBox" type="VBoxContainer" parent="Panel" unique_id=54264427]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="Panel/VBox" unique_id=1693081399]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "—"
+
+[node name="HPLabel" type="Label" parent="Panel/VBox" unique_id=1598948815]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "HP — / —"

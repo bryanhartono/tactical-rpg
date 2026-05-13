@@ -49,6 +49,10 @@ func execute() -> void:
 	CombatEventBus.attack_resolving.emit(attacker, target, attacker.main_weapon, damage_ref)
 	var final_damage: int = damage_ref[0]
 
+	# Local view-side signal (Phase 2): UnitView3D listens to play the attack animation.
+	# Fired before take_damage so the attacker animates before the defender flinches.
+	attacker.attacked.emit(target)
+
 	target.take_damage(final_damage, attacker.main_weapon)
 	CombatEventBus.damage_dealt.emit(attacker, target, final_damage, attacker.main_weapon)
 	CombatEventBus.weapon_used.emit(attacker, attacker.main_weapon, 0)

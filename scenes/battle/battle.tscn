@@ -4,124 +4,168 @@
 [ext_resource type="Script" uid="uid://bqj155tvo55jd" path="res://scripts/battle/view/board_view_3d.gd" id="2_h0kxc"]
 [ext_resource type="Script" uid="uid://g62nwi7pcck0" path="res://scenes/battle/battle_manager.gd" id="2_xd4uy"]
 [ext_resource type="PackedScene" uid="uid://bmeuyr34k2p7k" path="res://scenes/battle/ui/debug_hud.tscn" id="3_0yh6x"]
+[ext_resource type="PackedScene" uid="uid://chnefd8x5ww4q" path="res://art/environment/kenney_nature_kit/Models/GLTF format/tree_pineSmallA.glb" id="3_mvulk"]
+[ext_resource type="PackedScene" uid="uid://bqog7pnrx4vwr" path="res://art/environment/kenney_nature_kit/Models/GLTF format/tree_pineTallA.glb" id="4_w40i5"]
+[ext_resource type="PackedScene" uid="uid://c53mgnp3fmmrj" path="res://art/environment/kenney_nature_kit/Models/GLTF format/tree_blocks.glb" id="5_fe4ja"]
 [ext_resource type="Script" uid="uid://cfqxnmund66gh" path="res://scripts/battle/input/tile_input_controller.gd" id="5_h0kxc"]
 [ext_resource type="PackedScene" uid="uid://nx4ed5sbrwyt" path="res://scenes/battle/ui/action_menu.tscn" id="5_py4tk"]
-[ext_resource type="Script" uid="uid://bk1hboxbmejfk" path="res://scenes/battle/ui/action_menu.gd" id="6_agsc7"]
+[ext_resource type="PackedScene" uid="uid://c2yvy41mxlvf8" path="res://art/environment/kenney_nature_kit/Models/GLTF format/tree_cone.glb" id="6_sgdsx"]
+[ext_resource type="PackedScene" uid="uid://v4raijoq8bw3" path="res://art/environment/kenney_nature_kit/Models/GLTF format/rock_largeA.glb" id="7_5moxy"]
 [ext_resource type="PackedScene" uid="uid://bgxk56trllikf" path="res://scenes/battle/ui/damage_preview.tscn" id="7_oiw7q"]
-[ext_resource type="Script" uid="uid://12a2jq4wxmfb" path="res://scenes/battle/ui/damage_preview.gd" id="8_fisqk"]
+[ext_resource type="PackedScene" uid="uid://dy1anv6rgam48" path="res://art/environment/kenney_nature_kit/Models/GLTF format/rock_smallA.glb" id="8_156m4"]
 [ext_resource type="Script" uid="uid://dm5jcfxb6od6p" path="res://scripts/battle/input/player_phase_controller.gd" id="8_oiw7q"]
+[ext_resource type="Script" uid="uid://cmd5ssy7nk4r0" path="res://scripts/battle/view/battle_camera.gd" id="9_156m4"]
 [ext_resource type="PackedScene" uid="uid://cd87bxfe75b4a" path="res://scenes/battle/ui/end_of_battle.tscn" id="9_mxe8n"]
-[ext_resource type="Script" uid="uid://dg00ew3il7muh" path="res://scenes/battle/ui/end_of_battle.gd" id="10_icoan"]
+[ext_resource type="Script" uid="uid://ctdxgajckpcik" path="res://scripts/data/camera_setting.gd" id="10_pyfix"]
+[ext_resource type="Resource" uid="uid://dxhr5anpmba6l" path="res://data/camera_settings/tactical.tres" id="11_8eh2s"]
+[ext_resource type="Resource" uid="uid://blrsplkn75sjm" path="res://data/camera_settings/overview.tres" id="12_e48mi"]
+[ext_resource type="Resource" uid="uid://bb2rpmiavksph" path="res://data/camera_settings/topdown.tres" id="13_ueicy"]
+[ext_resource type="PackedScene" uid="uid://cyrsyd3r58rq6" path="res://scenes/battle/ui/unit_status_panel.tscn" id="19_pyfix"]
+[ext_resource type="Script" uid="uid://w0xj34cfyo2g" path="res://scenes/battle/ui/unit_status_panel.gd" id="20_8eh2s"]
+[ext_resource type="Script" uid="uid://udtyg74f5g5b" path="res://scripts/battle/input/camera_input_controller.gd" id="24_pyfix"]
+[ext_resource type="Script" uid="uid://cxco75hksrfeq" path="res://scenes/battle/vfx/vfx_layer.gd" id="25_8eh2s"]
 
-[node name="BattleScene" type="Node" unique_id=1544469689]
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_mxe8n"]
+sky_top_color = Color(0.41568628, 0.5764706, 0.78431374, 1)
+sky_horizon_color = Color(0.72156864, 0.76862746, 0.8, 1)
+ground_bottom_color = Color(0.16470589, 0.22745098, 0.16470589, 1)
+ground_horizon_color = Color(0.47843137, 0.5411765, 0.47843137, 1)
+
+[sub_resource type="Sky" id="Sky_icoan"]
+sky_material = SubResource("ProceduralSkyMaterial_mxe8n")
+
+[sub_resource type="Environment" id="Environment_kd6yx"]
+background_mode = 2
+sky = SubResource("Sky_icoan")
+ambient_light_source = 3
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.4
+glow_strength = 0.8
+glow_blend_mode = 2
+
+[node name="BattleScene" type="Node" unique_id=421188811]
 script = ExtResource("1_ffvsa")
 
-[node name="Board" type="Node3D" parent="." unique_id=989585225]
+[node name="Board" type="Node3D" parent="." unique_id=662226915]
 
-[node name="GridOverlay" type="Node3D" parent="Board" unique_id=557800132]
+[node name="GridOverlay" type="Node3D" parent="Board" unique_id=1305059620]
 script = ExtResource("2_h0kxc")
 
-[node name="UnitsLayer" type="Node3D" parent="Board" unique_id=1904282471]
+[node name="UnitsLayer" type="Node3D" parent="Board" unique_id=1979145500]
 
-[node name="BattleCamera" type="Node3D" parent="." unique_id=969319725]
+[node name="Environment" type="Node3D" parent="Board" unique_id=2139337094]
 
-[node name="Pivot" type="Node3D" parent="BattleCamera" unique_id=1705868912]
+[node name="tree_pineSmallA" parent="Board/Environment" unique_id=878410985 instance=ExtResource("3_mvulk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, -1.5)
 
-[node name="Camera3D" type="Camera3D" parent="BattleCamera/Pivot" unique_id=462175777]
+[node name="tree_pineTallA" parent="Board/Environment" unique_id=1352776043 instance=ExtResource("4_w40i5")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0, -1)
+
+[node name="tree_blocks" parent="Board/Environment" unique_id=743941801 instance=ExtResource("5_fe4ja")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 10.5)
+
+[node name="tree_cone" parent="Board/Environment" unique_id=1799853001 instance=ExtResource("6_sgdsx")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 11)
+
+[node name="rock_largeA" parent="Board/Environment" unique_id=1912733837 instance=ExtResource("7_5moxy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, 4.5)
+
+[node name="rock_smallA" parent="Board/Environment" unique_id=86648565 instance=ExtResource("8_156m4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, 5.5)
+
+[node name="BattleCamera" type="Node3D" parent="." unique_id=1367689937]
+script = ExtResource("9_156m4")
+settings = Array[ExtResource("10_pyfix")]([ExtResource("11_8eh2s"), ExtResource("12_e48mi"), ExtResource("13_ueicy")])
+
+[node name="Pivot" type="Node3D" parent="BattleCamera" unique_id=695810643]
+
+[node name="Camera3D" type="Camera3D" parent="BattleCamera/Pivot" unique_id=2027873599]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -10)
 
-[node name="BattleManager" type="Node" parent="." unique_id=2134427092]
+[node name="BattleManager" type="Node" parent="." unique_id=75065652]
 script = ExtResource("2_xd4uy")
 
-[node name="BattleUI" type="CanvasLayer" parent="." unique_id=1883434911]
+[node name="BattleUI" type="CanvasLayer" parent="." unique_id=1574995560]
 
-[node name="DebugHUD" parent="BattleUI" unique_id=448932418 instance=ExtResource("3_0yh6x")]
+[node name="DebugHUD" parent="BattleUI" unique_id=2014669976 instance=ExtResource("3_0yh6x")]
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="FPSLabel2" type="Label" parent="BattleUI/DebugHUD" unique_id=449059814]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 8.0
-offset_right = 200.0
-offset_bottom = 36.0
-text = "FPS: --"
-
-[node name="ActionMenu" type="Control" parent="BattleUI" unique_id=1765447981 instance=ExtResource("5_py4tk")]
-layout_mode = 3
-anchors_preset = 0
-mouse_filter = 2
-script = ExtResource("6_agsc7")
-
-[node name="Panel" type="PanelContainer" parent="BattleUI/ActionMenu" unique_id=898036327]
-layout_mode = 0
-
-[node name="Buttons" type="VBoxContainer" parent="BattleUI/ActionMenu/Panel" unique_id=1424895176]
-layout_mode = 2
-
-[node name="MoveButton" type="Button" parent="BattleUI/ActionMenu/Panel/Buttons" unique_id=1689568875]
-layout_mode = 2
-text = "Move"
-
-[node name="AttackButton" type="Button" parent="BattleUI/ActionMenu/Panel/Buttons" unique_id=1906440505]
-layout_mode = 2
-text = "Attack"
-
-[node name="WaitButton" type="Button" parent="BattleUI/ActionMenu/Panel/Buttons" unique_id=1220359232]
-layout_mode = 2
-text = "Wait"
-
-[node name="CancelButton" type="Button" parent="BattleUI/ActionMenu/Panel/Buttons" unique_id=579231551]
-layout_mode = 2
-text = "Cancel"
-
-[node name="DamagePreview" type="Control" parent="BattleUI" unique_id=987859348 instance=ExtResource("7_oiw7q")]
-layout_mode = 3
-anchors_preset = 0
-script = ExtResource("8_fisqk")
-
-[node name="Panel" type="PanelContainer" parent="BattleUI/DamagePreview" unique_id=1821434172]
-layout_mode = 0
-
-[node name="Label" type="Label" parent="BattleUI/DamagePreview/Panel" unique_id=1970212040]
-layout_mode = 2
-text = "Dmg: --"
-
-[node name="EndOfBattle" type="Control" parent="BattleUI" unique_id=1265580297 instance=ExtResource("9_mxe8n")]
+[node name="UnitClickLayer" type="Control" parent="BattleUI" unique_id=152825543]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="ActionMenu" parent="BattleUI" unique_id=392790996 instance=ExtResource("5_py4tk")]
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="DamagePreview" parent="BattleUI" unique_id=815449518 instance=ExtResource("7_oiw7q")]
+
+[node name="EndOfBattle" parent="BattleUI" unique_id=1961804341 instance=ExtResource("9_mxe8n")]
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("10_icoan")
 
-[node name="Panel" type="PanelContainer" parent="BattleUI/EndOfBattle" unique_id=1677880284]
+[node name="UnitStatusPanel" type="Control" parent="BattleUI" unique_id=504820727 instance=ExtResource("19_pyfix")]
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -312.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = 164.0
+grow_horizontal = 0
+mouse_filter = 2
+script = ExtResource("20_8eh2s")
+
+[node name="Panel" type="PanelContainer" parent="BattleUI/UnitStatusPanel" unique_id=912231961]
 layout_mode = 0
-anchor_left = 0.35
-anchor_top = 0.4
-anchor_right = 0.65
-anchor_bottom = 0.6
+anchor_right = 1.0
+anchor_bottom = 1.0
 
-[node name="VBox" type="VBoxContainer" parent="BattleUI/EndOfBattle/Panel" unique_id=580409783]
+[node name="VBox" type="VBoxContainer" parent="BattleUI/UnitStatusPanel/Panel" unique_id=54264427]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="BattleUI/EndOfBattle/Panel/VBox" unique_id=1412246401]
+[node name="NameLabel" type="Label" parent="BattleUI/UnitStatusPanel/Panel/VBox" unique_id=1693081399]
 layout_mode = 2
-text = "Battle Ended"
-horizontal_alignment = 1
+theme_override_font_sizes/font_size = 22
+text = "—"
 
-[node name="RestartButton" type="Button" parent="BattleUI/EndOfBattle/Panel/VBox" unique_id=1949932213]
+[node name="HPLabel" type="Label" parent="BattleUI/UnitStatusPanel/Panel/VBox" unique_id=1598948815]
 layout_mode = 2
-text = "Restart"
+theme_override_font_sizes/font_size = 18
+text = "HP — / —"
 
-[node name="TileInputController" type="Node" parent="." unique_id=695044648]
+[node name="TileInputController" type="Node" parent="." unique_id=1354828044]
 script = ExtResource("5_h0kxc")
 
-[node name="PlayerPhaseController" type="Node" parent="." unique_id=2053548140]
+[node name="PlayerPhaseController" type="Node" parent="." unique_id=1196115227]
 script = ExtResource("8_oiw7q")
 manager_path = NodePath("../BattleManager")
 input_path = NodePath("../TileInputController")
 board_view_path = NodePath("../Board/GridOverlay")
 action_menu_path = NodePath("../BattleUI/ActionMenu")
 damage_preview_path = NodePath("../BattleUI/DamagePreview")
+status_panel_path = NodePath("../BattleUI/UnitStatusPanel")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=630245140]
+environment = SubResource("Environment_kd6yx")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=103303829]
+transform = Transform3D(0.8660254, -0.38302222, 0.32139382, 0, 0.64278764, 0.76604444, -0.5, -0.66341394, 0.5566704, 0, 0, 0)
+light_energy = 1.1
+shadow_enabled = true
+shadow_bias = 0.05
+directional_shadow_max_distance = 50.0
+
+[node name="CameraInputController" type="Node" parent="." unique_id=1300481650]
+script = ExtResource("24_pyfix")
+camera_path = NodePath("../BattleCamera")
+player_phase_path = NodePath("../PlayerPhaseController")
+
+[node name="VfxLayer" type="Node3D" parent="." unique_id=239414137]
+script = ExtResource("25_8eh2s")
