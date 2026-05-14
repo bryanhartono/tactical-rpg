@@ -5,6 +5,14 @@ class_name UnitView3D extends Node3D
 ## UI panel (UnitStatusPanel), not above the sprite. See docs/gdd.md §6.1, §6.4.
 
 const STEP_DURATION: float = 0.15  # seconds per tile-step in the move tween
+## Half the sprite's world-space height (64 px × pixel_size 0.025). Used by BattleManager
+## and UnitClickRegion to compute the camera-pitch-dependent Z offset.
+const SPRITE_HALF_HEIGHT: float = 0.8
+
+## Computed from the active camera's pitch: SPRITE_HALF_HEIGHT / sin(|pitch|).
+## BattleManager pushes a new value whenever the camera preset changes.
+## Default matches the first (tactical, -50°) preset.
+var _z_offset: float = 1.044
 
 @export var unit: CharacterUnit
 @export var sprite_frames_resource: SpriteFrames
@@ -17,6 +25,13 @@ const STEP_DURATION: float = 0.15  # seconds per tile-step in the move tween
 ## finishes. PlayerPhaseController and AIController await this between commands.
 signal animation_complete
 
+## Called by BattleManager when the active camera preset changes. Repositions the unit
+## to keep its sprite center projected onto its tile center from the new angle.
+func apply_z_offset(z: float) -> void:
+	_z_offset = z
+	if is_instance_valid(unit):
+		position = Vector3(unit.grid_position.x, 0.0, unit.grid_position.y + _z_offset)
+
 func _ready() -> void:
 	if unit == null:
 		push_error("UnitView3D has no unit assigned")
@@ -28,9 +43,7 @@ func _ready() -> void:
 	unit.died.connect(_on_died)
 	unit.facing_changed.connect(_on_facing_changed)
 	unit.attacked.connect(_on_attacked)
-	# Feet anchored at tile center on the ground (no Y offset; sprite.offset.y handles
-	# the visual lift so the bottom-center of the image draws at this position).
-	position = Vector3(unit.grid_position.x, 0.0, unit.grid_position.y)
+	position = Vector3(unit.grid_position.x, 0.0, unit.grid_position.y + _z_offset)
 	_refresh_visual()
 	play("idle")
 
@@ -53,13 +66,13 @@ func play(anim_name: String) -> void:
 func _on_moved(_from: Vector2i, _to: Vector2i) -> void:
 	var path := unit.last_move_path
 	if path.is_empty() or path.size() == 1:
-		position = Vector3(_to.x, 0.0, _to.y)
+		position = Vector3(_to.x, 0.0, _to.y + _z_offset)
 		animation_complete.emit()
 		return
 	play("walk")
 	var tween := create_tween()
 	for i in range(1, path.size()):
-		var step_pos := Vector3(path[i].x, 0.0, path[i].y)
+		var step_pos := Vector3(path[i].x, 0.0, path[i].y + _z_offset)
 		tween.tween_property(self, "position", step_pos, STEP_DURATION).set_trans(Tween.TRANS_LINEAR)
 	await tween.finished
 	if is_instance_valid(unit) and unit.is_alive():

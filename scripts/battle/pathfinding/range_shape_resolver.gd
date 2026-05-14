@@ -22,9 +22,11 @@ static func resolve(shape: RangeShape, origin: Vector2i, _facing: Vector2i = Vec
 	if origin_idx < 0:
 		return result
 	var num_cols := shape.num_cols
+	@warning_ignore("integer_division")
 	var local_origin := Vector2i(origin_idx % num_cols, origin_idx / num_cols)
 	for i in shape.cells.size():
 		if shape.cells[i] == 1:
+			@warning_ignore("integer_division")
 			var local := Vector2i(i % num_cols, i / num_cols)
 			var offset := local - local_origin
 			result.append(origin + offset)

@@ -40,10 +40,10 @@ func set_board(board: Board) -> void:
 
 ## Show / hide the translucent grid overlay. Defaults to false; T14 toggles on
 ## entry to a targeting state.
-func set_grid_visible(visible: bool) -> void:
-	_grid_visible = visible
+func set_grid_visible(enabled: bool) -> void:
+	_grid_visible = enabled
 	if _grid_overlay != null:
-		_grid_overlay.visible = visible
+		_grid_overlay.visible = enabled
 
 ## Tint the listed tiles with `color`. Phase 2 renders highlights as small quads
 ## just above the ground.

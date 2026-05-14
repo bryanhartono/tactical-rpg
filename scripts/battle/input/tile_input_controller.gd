@@ -1,14 +1,12 @@
 class_name TileInputController extends Node
-## Mouse → grid coordinate translator. Raycasts from the active Camera3D through the
-## cursor onto the tile colliders set up by BoardView3D (see P1-T04).
+## Mouse → grid coordinate translator. Intersects the camera ray with the y = 0 board
+## plane to determine the clicked grid cell — no physics bodies needed.
 ##
 ## Emits `tile_clicked` for every left-click on the board, plus `unit_clicked` when the
 ## tile is occupied. PlayerPhaseController consumes these. Right-click cancels and is
 ## emitted as `cancel_pressed`.
 ##
 ## `set_enabled(false)` suppresses input during enemy / animation phases.
-
-const _RAY_LENGTH: float = 100.0
 
 @export var board_path: NodePath
 @export var camera_path: NodePath
@@ -49,33 +47,19 @@ func _unhandled_input(event: InputEvent) -> void:
 			cancel_pressed.emit()
 
 func _handle_left_click(screen_pos: Vector2) -> void:
+	# Intersect the camera ray with the y = 0 board plane. This avoids the
+	# "tall box blocks far tiles" problem that physics raycasting has at low
+	# camera angles and is accurate for any flat board.
 	var origin := _camera.project_ray_origin(screen_pos)
 	var direction := _camera.project_ray_normal(screen_pos)
-	var space := _camera.get_world_3d().direct_space_state
-	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * _RAY_LENGTH)
-	query.collide_with_bodies = true
-	# Also pick UnitView3D ClickAreas so the player can click on the sprite itself,
-	# not just the underlying ground. The unit's Area3D carries `unit_id` metadata;
-	# the tile's StaticBody3D carries `grid_pos`. Whichever the ray hits first wins.
-	query.collide_with_areas = true
-	var hit := space.intersect_ray(query)
-	if hit.is_empty():
+	if direction.y >= 0.0:
+		return  # Ray points up or sideways — can't hit the board.
+	var t := -origin.y / direction.y
+	var world_hit := origin + direction * t
+	var grid := Vector2i(roundi(world_hit.x), roundi(world_hit.z))
+	if not _board.is_in_bounds(grid):
 		return
-	var collider: Object = hit.get("collider")
-	if collider == null:
-		return
-	# Sprite-area click → resolve to the unit and its tile.
-	if collider.has_meta("unit_id"):
-		var unit_id: int = collider.get_meta("unit_id")
-		var unit := _board.units.get(unit_id) as CharacterUnit
-		if unit != null and unit.is_alive():
-			tile_clicked.emit(unit.grid_position)
-			unit_clicked.emit(unit, unit.grid_position)
-		return
-	# Plain tile click.
-	if collider.has_meta("grid_pos"):
-		var grid: Vector2i = collider.get_meta("grid_pos")
-		tile_clicked.emit(grid)
-		var unit := _board.get_unit_at(grid)
-		if unit != null:
-			unit_clicked.emit(unit, grid)
+	tile_clicked.emit(grid)
+	var unit := _board.get_unit_at(grid) as CharacterUnit
+	if unit != null and unit.is_alive():
+		unit_clicked.emit(unit, grid)

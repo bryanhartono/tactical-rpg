@@ -244,26 +244,19 @@ func _process(_delta: float) -> void:
 
 func _hovered_target() -> CharacterUnit:
 	var cam := _manager.get_node("../BattleCamera/Pivot/Camera3D") as Camera3D
+	if cam == null:
+		return null
 	var mouse_pos := get_viewport().get_mouse_position()
 	var origin := cam.project_ray_origin(mouse_pos)
 	var direction := cam.project_ray_normal(mouse_pos)
-	var space := cam.get_world_3d().direct_space_state
-	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * 100.0)
-	query.collide_with_areas = true
-	var hit := space.intersect_ray(query)
-	if hit.is_empty():
+	if direction.y >= 0.0:
 		return null
-	var collider: Object = hit.get("collider")
-	if collider == null:
+	var t := -origin.y / direction.y
+	var world_hit := origin + direction * t
+	var grid := Vector2i(roundi(world_hit.x), roundi(world_hit.z))
+	if not _manager.board.is_in_bounds(grid):
 		return null
-	if collider.has_meta("unit_id"):
-		var u := _manager.board.units.get(collider.get_meta("unit_id")) as CharacterUnit
-		if u != null and _attack_targets.has(u):
-			return u
-		return null
-	if collider.has_meta("grid_pos"):
-		var grid: Vector2i = collider.get_meta("grid_pos")
-		var u := _manager.board.get_unit_at(grid)
-		if u != null and _attack_targets.has(u):
-			return u
+	var u := _manager.board.get_unit_at(grid) as CharacterUnit
+	if u != null and _attack_targets.has(u):
+		return u
 	return null

@@ -49,6 +49,13 @@ func execute() -> void:
 	CombatEventBus.attack_resolving.emit(attacker, target, attacker.main_weapon, damage_ref)
 	var final_damage: int = damage_ref[0]
 
+	# Face the attacker toward the target before the animation fires.
+	var delta := target.grid_position - attacker.grid_position
+	if delta.x != 0 or delta.y != 0:
+		attacker.facing = Vector2i(sign(delta.x), 0) if abs(delta.x) >= abs(delta.y) \
+				else Vector2i(0, sign(delta.y))
+		attacker.facing_changed.emit(attacker.facing)
+
 	# Local view-side signal (Phase 2): UnitView3D listens to play the attack animation.
 	# Fired before take_damage so the attacker animates before the defender flinches.
 	attacker.attacked.emit(target)
@@ -80,6 +87,7 @@ static func predict_damage(atk: CharacterUnit, def: CharacterUnit, w: Weapon) ->
 # Phase 1 damage formula: simplified from GDD §5.5.
 # Missing: facing/elevation/element/type modifiers, hit/crit rolls. Phase 3 + 5 add them.
 static func _compute_damage(atk: CharacterUnit, def: CharacterUnit, w: Weapon) -> int:
+	@warning_ignore("integer_division")
 	var base: int = atk.atk * w.initial_power / 10
 	var mitigated: int = base - def.def
 	return clamp(mitigated, 1, 9999)

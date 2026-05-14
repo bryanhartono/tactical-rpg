@@ -41,14 +41,17 @@ var has_acted: bool = false
 ## Emitted whenever HP changes, including healing. Receivers: UnitView3D.
 signal hp_changed(old_hp: int, new_hp: int)
 ## Emitted after grid_position is updated. Phase 1: instant; Phase 2: view tweens.
+@warning_ignore("unused_signal")
 signal moved(from_tile: Vector2i, to_tile: Vector2i)
 ## Emitted after facing is updated.
+@warning_ignore("unused_signal")
 signal facing_changed(new_facing: Vector2i)
 ## Emitted exactly once when current_hp first reaches 0.
 signal died
 ## Emitted from AttackCommand BEFORE damage resolves on the target. The view layer
 ## listens to play the attacker's attack animation. Bus-side observers should listen
 ## to CombatEventBus.damage_dealt instead — this signal is intentionally local.
+@warning_ignore("unused_signal")
 signal attacked(target: CharacterUnit)
 
 # Phase 2 view affordance: the most recent move's path, in tile coords (origin first,

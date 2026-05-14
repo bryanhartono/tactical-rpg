@@ -52,10 +52,29 @@ func _bootstrap() -> void:
 	_setup_camera()
 	_setup_test_battle()
 	_tile_input.bind(board, _battle_camera.get_node("Pivot/Camera3D"))
+	# Keep unit Z offsets in sync whenever the player cycles camera presets.
+	_battle_camera.preset_changed.connect(_on_camera_preset_changed)
+	# Apply the correct Z offset for whichever preset the camera already loaded with.
+	var initial_setting: CameraSetting = _battle_camera.settings[_battle_camera.get_current_index()]
+	_push_z_offset_to_views(_compute_unit_z_offset(initial_setting))
 	# Auto-focus the camera on each enemy as their turn starts (player phase stays
 	# user-controlled; F focuses on the selected unit there).
 	CombatEventBus.turn_started.connect(_on_turn_started)
 	start_battle()
+
+func _on_camera_preset_changed(_index: int, setting: CameraSetting) -> void:
+	_push_z_offset_to_views(_compute_unit_z_offset(setting))
+
+func _compute_unit_z_offset(setting: CameraSetting) -> float:
+	# Derive the Z offset that places the sprite center on the tile center in screen space.
+	# Formula: SPRITE_HALF_HEIGHT / sin(|pitch|). pitch is stored as a negative angle in x.
+	var pitch_rad := deg_to_rad(-setting.rotation_angles.x)
+	return UnitView3D.SPRITE_HALF_HEIGHT / max(sin(pitch_rad), 0.001)
+
+func _push_z_offset_to_views(z: float) -> void:
+	for view in _views_by_unit_id.values():
+		if is_instance_valid(view):
+			view.apply_z_offset(z)
 
 func _on_turn_started(unit: CharacterUnit) -> void:
 	if current_phase != Phase.ENEMY:
