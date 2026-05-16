@@ -61,6 +61,10 @@ func focus_on_unit(unit: CharacterUnit, duration: float = 0.3) -> void:
 func get_current_index() -> int:
 	return _current_index
 
+## Current zoom distance (Camera3D z-offset from pivot). Used by pan code to scale speed.
+func get_distance() -> float:
+	return abs(_camera.position.z)
+
 # ----------------------------------------------------------------------------
 # Internals
 # ----------------------------------------------------------------------------

@@ -25,20 +25,12 @@ func _process(_delta: float) -> void:
 	if not is_instance_valid(unit) or not unit.is_alive() or camera == null:
 		hide()
 		return
-	# A BILLBOARD_ENABLED sprite always orients its image-up axis along the camera's
-	# view-up axis (and image-right along view-right). So the visible head appears at
-	# feet_world + cam_up * height — projecting along world-up instead gives a wrong
-	# rect at tilted camera angles.
+	# UnitView3D sits exactly on the tile. The AnimatedSprite3D offset anchors the sprite
+	# feet at the node (tile) position and the sprite grows upward along cam_up.
 	var cam_basis := camera.global_transform.basis
 	var cam_up: Vector3 = cam_basis.y
 	var cam_right: Vector3 = cam_basis.x
-	# Match the z_offset UnitView3D uses: sprite center must project onto tile center.
-	# Formula: (sprite_height / 2) / sin(|pitch|) = half_height / (-cam_up.z).
-	var neg_z: float = -cam_up.z
-	if neg_z < 0.001:
-		neg_z = 0.001
-	var z_offset: float = _SPRITE_WORLD_HEIGHT * 0.5 / neg_z
-	var feet_world := Vector3(unit.grid_position.x, 0.0, unit.grid_position.y + z_offset)
+	var feet_world := Vector3(unit.grid_position.x, 0.0, unit.grid_position.y)
 	if camera.is_position_behind(feet_world):
 		hide()
 		return

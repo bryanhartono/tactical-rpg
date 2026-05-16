@@ -1,36 +1,29 @@
 class_name UnitView3D extends Node3D
 ## Visual representation of a CharacterUnit using an AnimatedSprite3D billboard.
-## Phase 2 (post-redesign): pixel sprite anchored at FEET so the character stands
-## centered on its tile from any camera angle. HP / name now live in a right-side
-## UI panel (UnitStatusPanel), not above the sprite. See docs/gdd.md §6.1, §6.4.
+## The node is placed exactly on the tile at (grid.x, 0, grid.y). The AnimatedSprite3D
+## child has offset=(0,32) which anchors sprite feet at the node origin, so the sprite
+## grows upward from the tile regardless of camera angle — no per-preset Z shifting needed.
+## HP / name live in UnitStatusPanel. See docs/gdd.md §6.1, §6.4.
 
 const STEP_DURATION: float = 0.15  # seconds per tile-step in the move tween
-## Half the sprite's world-space height (64 px × pixel_size 0.025). Used by BattleManager
-## and UnitClickRegion to compute the camera-pitch-dependent Z offset.
+## Half the sprite's world-space height (64 px × pixel_size 0.025).
 const SPRITE_HALF_HEIGHT: float = 0.8
-
-## Computed from the active camera's pitch: SPRITE_HALF_HEIGHT / sin(|pitch|).
-## BattleManager pushes a new value whenever the camera preset changes.
-## Default matches the first (tactical, -50°) preset.
-var _z_offset: float = 1.044
 
 @export var unit: CharacterUnit
 @export var sprite_frames_resource: SpriteFrames
 
 @onready var _sprite: AnimatedSprite3D = $AnimatedSprite3D
-# Shadow Decal is in the scene but doesn't need a script reference — it follows the
-# parent's transform automatically.
 
 ## Emitted when the latest play()-driven animation (move walk, attack, hit, death)
 ## finishes. PlayerPhaseController and AIController await this between commands.
 signal animation_complete
 
-## Called by BattleManager when the active camera preset changes. Repositions the unit
-## to keep its sprite center projected onto its tile center from the new angle.
-func apply_z_offset(z: float) -> void:
-	_z_offset = z
+## Immediately reposition and refresh the view to match the current unit state.
+## Called after a RollbackService rewind to snap views to restored positions.
+func snap_to_unit() -> void:
 	if is_instance_valid(unit):
-		position = Vector3(unit.grid_position.x, 0.0, unit.grid_position.y + _z_offset)
+		position = Vector3(unit.grid_position.x, 0.0, unit.grid_position.y)
+		_refresh_visual()
 
 func _ready() -> void:
 	if unit == null:
@@ -43,7 +36,7 @@ func _ready() -> void:
 	unit.died.connect(_on_died)
 	unit.facing_changed.connect(_on_facing_changed)
 	unit.attacked.connect(_on_attacked)
-	position = Vector3(unit.grid_position.x, 0.0, unit.grid_position.y + _z_offset)
+	position = Vector3(unit.grid_position.x, 0.0, unit.grid_position.y)
 	_refresh_visual()
 	play("idle")
 
@@ -66,13 +59,13 @@ func play(anim_name: String) -> void:
 func _on_moved(_from: Vector2i, _to: Vector2i) -> void:
 	var path := unit.last_move_path
 	if path.is_empty() or path.size() == 1:
-		position = Vector3(_to.x, 0.0, _to.y + _z_offset)
+		position = Vector3(_to.x, 0.0, _to.y)
 		animation_complete.emit()
 		return
 	play("walk")
 	var tween := create_tween()
 	for i in range(1, path.size()):
-		var step_pos := Vector3(path[i].x, 0.0, path[i].y + _z_offset)
+		var step_pos := Vector3(path[i].x, 0.0, path[i].y)
 		tween.tween_property(self, "position", step_pos, STEP_DURATION).set_trans(Tween.TRANS_LINEAR)
 	await tween.finished
 	if is_instance_valid(unit) and unit.is_alive():

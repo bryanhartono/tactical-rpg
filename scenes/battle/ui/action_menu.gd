@@ -20,10 +20,10 @@ func _ready() -> void:
 	_cancel_btn.pressed.connect(_on_cancel_pressed)
 	hide()
 
-## Show the menu for `unit`. Position is fixed (anchored in the scene) — no screen_pos
-## argument any more. `can_move` / `can_attack` toggle button availability.
-func show_for_unit(_unit: CharacterUnit, can_move: bool, can_attack: bool) -> void:
-	_move_btn.disabled = not can_move
+## Show the menu for `unit`. Movement is now immediate on tile click so the Move button
+## is always hidden. `can_attack` enables or disables the Attack button.
+func show_for_unit(_unit: CharacterUnit, _can_move: bool, can_attack: bool) -> void:
+	_move_btn.visible = false
 	_attack_btn.disabled = not can_attack
 	show()
 

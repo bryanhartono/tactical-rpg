@@ -22,7 +22,7 @@ func _init(p_board: Board, p_unit: CharacterUnit, p_destination: Vector2i) -> vo
 func validate() -> bool:
 	if unit == null or board == null:
 		return false
-	if unit.has_acted:
+	if unit.has_acted or unit.has_moved:
 		return false
 	if not board.is_in_bounds(destination):
 		return false
@@ -45,6 +45,7 @@ func execute() -> void:
 	if _path.size() >= 2:
 		unit.facing = _path[-1] - _path[-2]
 		unit.facing_changed.emit(unit.facing)
+	unit.has_moved = true
 	unit.moved.emit(_origin, destination)
 
 func complete() -> void:

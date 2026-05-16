@@ -16,9 +16,6 @@ config/features=PackedStringArray("4.6", "Forward Plus")
 
 [autoload]
 
-MCPScreenshot="*res://addons/godot_mcp/mcp_screenshot_service.gd"
-MCPInputService="*res://addons/godot_mcp/mcp_input_service.gd"
-MCPGameInspector="*res://addons/godot_mcp/mcp_game_inspector_service.gd"
 MasterDataService="*res://scripts/autoload/master_data_service.gd"
 CombatEventBus="*res://scripts/autoload/combat_event_bus.gd"
 CommandQueue="*res://scripts/autoload/command_queue.gd"

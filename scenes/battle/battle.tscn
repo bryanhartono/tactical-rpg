@@ -22,6 +22,7 @@
 [ext_resource type="Resource" uid="uid://bb2rpmiavksph" path="res://data/camera_settings/topdown.tres" id="13_ueicy"]
 [ext_resource type="PackedScene" uid="uid://cyrsyd3r58rq6" path="res://scenes/battle/ui/unit_status_panel.tscn" id="19_pyfix"]
 [ext_resource type="Script" uid="uid://w0xj34cfyo2g" path="res://scenes/battle/ui/unit_status_panel.gd" id="20_8eh2s"]
+[ext_resource type="Script" uid="uid://btblqku34fyc2" path="res://scenes/battle/ui/rewind_button.gd" id="21_8eh2s"]
 [ext_resource type="Script" uid="uid://udtyg74f5g5b" path="res://scripts/battle/input/camera_input_controller.gd" id="24_pyfix"]
 [ext_resource type="Script" uid="uid://cxco75hksrfeq" path="res://scenes/battle/vfx/vfx_layer.gd" id="25_8eh2s"]
 
@@ -139,6 +140,27 @@ text = "—"
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "HP — / —"
+
+[node name="RewindButton" type="Button" parent="BattleUI" unique_id=982718098]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -150.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 50.0
+text = "↩ Rewind (3)"
+script = ExtResource("21_8eh2s")
+
+[node name="PanButton" type="CheckButton" parent="BattleUI" unique_id=301076094]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -150.0
+offset_top = 58.0
+offset_right = -10.0
+offset_bottom = 98.0
+text = "Pan Camera"
 
 [node name="TileInputController" type="Node" parent="." unique_id=1354828044]
 script = ExtResource("5_h0kxc")

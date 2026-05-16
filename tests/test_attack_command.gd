@@ -1,12 +1,13 @@
 extends GutTest
-## P1-T11: AttackCommand.
+## P3-T02: AttackCommand test suite — verifies orchestration (signals, state),
+## not damage values (those are tested in test_attack_simulator.gd).
 
 func test_attack_happy_path_emits_bus_signals() -> void:
 	var aria := P1TestHelpers.make_unit(1, 0, Vector2i(5, 4))
 	var bandit := P1TestHelpers.make_unit(2, 1, Vector2i(5, 5), "res://data/characters/bandit.tres")
 	var b: Board = P1TestHelpers.make_board_with_units(10, 10, [aria, bandit])
-	# Boost atk so we deal real damage with the toy formula.
-	aria.atk = 30  # 30 * 5 / 10 - 5 = 10
+	# High atk so the new formula still deals damage.
+	aria.atk = 1000
 
 	var dealt := [false]
 	var weapon := [false]
@@ -23,7 +24,7 @@ func test_attack_happy_path_emits_bus_signals() -> void:
 	cmd.prepare()
 	cmd.execute()
 
-	assert_eq(bandit.current_hp, 15)
+	assert_lt(bandit.current_hp, bandit.max_hp, "bandit should take damage")
 	assert_true(aria.has_acted)
 	assert_true(dealt[0])
 	assert_true(weapon[0])
@@ -38,7 +39,7 @@ func test_attack_lethal_emits_unit_killed() -> void:
 	var aria := P1TestHelpers.make_unit(1, 0, Vector2i(5, 4))
 	var bandit := P1TestHelpers.make_unit(2, 1, Vector2i(5, 5), "res://data/characters/bandit.tres")
 	var b: Board = P1TestHelpers.make_board_with_units(10, 10, [aria, bandit])
-	aria.atk = 1000  # absurd — guaranteed kill
+	aria.atk = 1000  # guaranteed kill with new formula (1000 * 5 / 100 - 5 = 45 >> 25 hp)
 
 	var killed := [false]
 	var conn := func(_a, _d, _src): killed[0] = true
@@ -69,10 +70,13 @@ func test_attack_rejects_same_team() -> void:
 	assert_false(cmd.validate())
 	aria.free(); reni.free()
 
-func test_predict_damage_matches_resolved_damage() -> void:
+func test_attack_delegates_to_simulator_not_inline_formula() -> void:
+	# Confirm there is no private _compute_damage on AttackCommand.
+	# The method was removed in P3-T02; AttackSimulator owns all formula logic.
 	var aria := P1TestHelpers.make_unit(1, 0, Vector2i(5, 4))
-	var bandit := P1TestHelpers.make_unit(2, 1, Vector2i(5, 5), "res://data/characters/bandit.tres")
-	aria.atk = 30
-	var predicted := AttackCommand.predict_damage(aria, bandit, aria.main_weapon)
-	assert_eq(predicted, 10)
-	aria.free(); bandit.free()
+	assert_false(aria.has_method("_compute_damage"),
+			"CharacterUnit should not have _compute_damage")
+	var cmd := AttackCommand.new(Board.create_flat(2, 2), aria, aria)
+	assert_false(cmd.has_method("_compute_damage"),
+			"AttackCommand should not have _compute_damage after P3-T02")
+	aria.free()

@@ -2,10 +2,8 @@ class_name AttackCommand extends Command
 ## Single attack with the unit's main weapon against a target unit.
 ## See docs/gdd.md §5.5, §10.4.
 ##
-## Phase 1 inlines the damage formula and the simulator-style prediction in
-## `predict_damage()`. Phase 3 extracts both into AttackSimulator so AI / damage
-## preview / actual resolution share one source of truth.
-## TODO(phase 3): extract _compute_damage and predict_damage to AttackSimulator.
+## Phase 3: all damage math lives in AttackSimulator. This command orchestrates
+## the event sequence (signal ordering, animation hooks, bus events) only.
 
 var board: Board
 var attacker: CharacterUnit
@@ -38,14 +36,20 @@ func validate() -> bool:
 	return in_range.has(target.grid_position)
 
 func prepare() -> void:
-	_damage = _compute_damage(attacker, target, attacker.main_weapon)
-	_was_lethal = (_damage >= target.current_hp)
+	var bc: BattleConst = MasterDataService.battle_const
+	var result := AttackSimulator.predict(attacker, target, attacker.main_weapon, board, bc)
+	_damage = result.expected_damage
+	_was_lethal = result.will_kill
 
 func execute() -> void:
+	var bc: BattleConst = MasterDataService.battle_const
+	# rng=null → deterministic (always hit, no crit) for Phase 3.
+	# Phase 5 will inject the shared game RNG here.
+	var result := AttackSimulator.resolve(attacker, target, attacker.main_weapon, board, bc)
+	var damage_ref: Array = [result.expected_damage]
+
 	# attack_resolving lets future BondActionService (Phase 7) insert a guard / mutate
-	# the damage. Listeners modify mutable_damage_ref[0]. No listeners exist in Phase 1
-	# but firing the hook means future code wires in cleanly.
-	var damage_ref: Array = [_damage]
+	# the damage. Listeners modify mutable_damage_ref[0].
 	CombatEventBus.attack_resolving.emit(attacker, target, attacker.main_weapon, damage_ref)
 	var final_damage: int = damage_ref[0]
 
@@ -67,27 +71,8 @@ func execute() -> void:
 	CombatEventBus.turn_ended.emit(attacker)
 
 func cancel() -> void:
-	# Phase 1: best-effort. Real rollback wiring lands in Phase 3 (RollbackService).
+	# Best-effort cancel. Canonical undo path is RollbackService.rewind_last_action (P3-T05).
 	var restored_old := target.current_hp
 	target.current_hp = min(target.current_hp + _damage, target.max_hp)
 	target.hp_changed.emit(restored_old, target.current_hp)
 	attacker.has_acted = false
-
-# ----------------------------------------------------------------------------
-# Helpers (also used by the damage-preview UI in P1-T17)
-# ----------------------------------------------------------------------------
-
-## Predicts the damage this command would deal without executing. Used by the
-## damage-preview popup. TODO(phase 3): move to AttackSimulator.predict().
-static func predict_damage(atk: CharacterUnit, def: CharacterUnit, w: Weapon) -> int:
-	if atk == null or def == null or w == null:
-		return 0
-	return _compute_damage(atk, def, w)
-
-# Phase 1 damage formula: simplified from GDD §5.5.
-# Missing: facing/elevation/element/type modifiers, hit/crit rolls. Phase 3 + 5 add them.
-static func _compute_damage(atk: CharacterUnit, def: CharacterUnit, w: Weapon) -> int:
-	@warning_ignore("integer_division")
-	var base: int = atk.atk * w.initial_power / 10
-	var mitigated: int = base - def.def
-	return clamp(mitigated, 1, 9999)

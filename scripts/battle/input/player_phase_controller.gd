@@ -27,6 +27,9 @@ var _status_panel: Node             # UnitStatusPanel; loose-typed for the same 
 
 var _state: State = State.IDLE
 var _selected: CharacterUnit
+## Tile the selected unit occupied when it was first clicked. Tentative moves keep the
+## unit's grid_position updated, but Cancel snaps back here.
+var _selection_origin: Vector2i = Vector2i.ZERO
 var _move_targets: Array[Vector2i] = []
 var _attack_targets: Array[CharacterUnit] = []
 
@@ -34,6 +37,12 @@ var _attack_targets: Array[CharacterUnit] = []
 ## doesn't have to reach into `_selected` directly (private-by-convention).
 func get_selected_unit() -> CharacterUnit:
 	return _selected
+
+## Called by CameraInputController when pan mode is enabled. Snaps any tentative move
+## back to origin and clears all selection UI so the board is clean during panning.
+func cancel_selection() -> void:
+	_snap_unit_to_origin()
+	_to_idle()
 
 func _ready() -> void:
 	_manager = get_node(manager_path)
@@ -48,7 +57,6 @@ func _ready() -> void:
 	_input.tile_clicked.connect(_on_tile_clicked)
 	_input.unit_clicked.connect(_on_unit_clicked)
 	_input.cancel_pressed.connect(_on_cancel_pressed)
-	_menu.move_chosen.connect(_on_move_chosen)
 	_menu.attack_chosen.connect(_on_attack_chosen)
 	_menu.wait_chosen.connect(_on_wait_chosen)
 	_menu.cancel_chosen.connect(_on_cancel_pressed)
@@ -71,47 +79,45 @@ func _on_phase_changed(p: int, _round: int) -> void:
 # ----------------------------------------------------------------------------
 
 func _on_unit_clicked(unit: CharacterUnit, _grid: Vector2i) -> void:
-	# Only own, alive, unacted units can be selected. If we're targeting an attack and
-	# the click landed on an enemy unit in range, fall through to the tile handler.
 	if _state == State.TARGETING_ATTACK and unit.team != _selected.team and _attack_targets.has(unit):
 		_resolve_attack(unit)
 		return
 	if unit.team != 0 or not unit.is_alive() or unit.has_acted:
 		return
+	if _state == State.UNIT_SELECTED:
+		if unit == _selected:
+			return
+		_snap_unit_to_origin()  # Snap previous unit before switching selection.
 	_select_unit(unit)
 
 func _on_tile_clicked(grid: Vector2i) -> void:
 	match _state:
-		State.TARGETING_MOVE:
+		State.UNIT_SELECTED:
 			if _move_targets.has(grid):
-				_resolve_move(grid)
+				_do_tentative_move(grid)
 		State.TARGETING_ATTACK:
-			# Attacks resolve via the unit_clicked path; clicking a non-occupant tile
-			# in attack-targeting state is a no-op (treat as "deselect target" later).
 			pass
 		_:
 			pass
 
 func _on_cancel_pressed() -> void:
-	_to_unit_selected_or_idle()
+	if _state == State.UNIT_SELECTED:
+		_snap_unit_to_origin()
+		_to_idle()
+	elif _state == State.TARGETING_ATTACK:
+		# Pop back to UNIT_SELECTED, restore move highlights without resetting origin.
+		_state = State.UNIT_SELECTED
+		_board_view.clear_highlights()
+		_board_view.set_grid_visible(true)
+		_board_view.highlight_tiles(_move_targets, _MOVE_COLOR)
+		var can_attack := not _selected.has_acted
+		_menu.show_for_unit(_selected, false, can_attack)
+	else:
+		_to_idle()
 
 # ----------------------------------------------------------------------------
 # Menu choice handlers
 # ----------------------------------------------------------------------------
-
-func _on_move_chosen() -> void:
-	if _selected == null or _selected.has_acted:
-		return
-	_state = State.TARGETING_MOVE
-	_menu.hide_menu()
-	var reachable := Pathfinder.compute_reachable(_manager.board, _selected.grid_position, _selected.move_budget)
-	_move_targets.clear()
-	for tile in reachable.keys():
-		if tile != _selected.grid_position:
-			_move_targets.append(tile)
-	_board_view.clear_highlights()
-	_board_view.set_grid_visible(true)
-	_board_view.highlight_tiles(_move_targets, _MOVE_COLOR)
 
 func _on_attack_chosen() -> void:
 	if _selected == null:
@@ -129,37 +135,42 @@ func _on_attack_chosen() -> void:
 func _on_wait_chosen() -> void:
 	if _selected == null:
 		return
-	CommandQueue.submit(WaitCommand.new(_selected))
+	var dest := _selected.grid_position
+	_snap_unit_to_origin()
+	if dest != _selection_origin:
+		# Convert tentative move to a real command (no new snapshot — already snapshotted on select).
+		_selected.has_moved = false
+		var ok := CommandQueue.submit_presnapshot(MoveCommand.new(_manager.board, _selected, dest))
+		if ok:
+			var view: UnitView3D = _manager.get_view_for(_selected.unit_id)
+			if view != null:
+				await view.animation_complete
+	CommandQueue.submit_presnapshot(WaitCommand.new(_selected))
 	_after_action_committed()
 
 # ----------------------------------------------------------------------------
 # Command resolution
 # ----------------------------------------------------------------------------
 
-func _resolve_move(grid: Vector2i) -> void:
-	var ok := CommandQueue.submit(MoveCommand.new(_manager.board, _selected, grid))
-	_board_view.clear_highlights()
-	if ok and not _selected.has_acted:
-		# Await the visual move so the menu doesn't pop while the unit is mid-stride.
-		var view: UnitView3D = _manager.get_view_for(_selected.unit_id)
-		if view != null:
-			await view.animation_complete
-		# Re-select to refresh menu (move alone doesn't end the turn — Move + Action + Face).
-		if is_instance_valid(_selected) and _selected.is_alive() and not _selected.has_acted:
-			_select_unit(_selected)
-		else:
-			_to_idle()
-	else:
-		_to_idle()
-	_maybe_end_phase()
-
 func _resolve_attack(target: CharacterUnit) -> void:
-	CommandQueue.submit(AttackCommand.new(_manager.board, _selected, target))
+	var dest := _selected.grid_position
+	_snap_unit_to_origin()
+	if dest != _selection_origin:
+		_selected.has_moved = false
+		var ok := CommandQueue.submit_presnapshot(MoveCommand.new(_manager.board, _selected, dest))
+		if ok:
+			var move_view: UnitView3D = _manager.get_view_for(_selected.unit_id)
+			if move_view != null:
+				await move_view.animation_complete
+	if not is_instance_valid(_selected) or not _selected.is_alive():
+		_to_idle()
+		_maybe_end_phase()
+		return
 	_board_view.clear_highlights()
-	# Hold the menu / state transition until the attack animation resolves.
-	var view: UnitView3D = _manager.get_view_for(_selected.unit_id)
-	if view != null:
-		await view.animation_complete
+	CommandQueue.submit_presnapshot(AttackCommand.new(_manager.board, _selected, target))
+	var atk_view: UnitView3D = _manager.get_view_for(_selected.unit_id)
+	if atk_view != null:
+		await atk_view.animation_complete
 	_to_idle()
 	_maybe_end_phase()
 
@@ -173,28 +184,28 @@ func _after_action_committed() -> void:
 # ----------------------------------------------------------------------------
 
 func _select_unit(unit: CharacterUnit) -> void:
+	# Snapshot current board state so one rewind restores everything done this selection.
+	RollbackService.snapshot_before_command(null)
 	_selected = unit
+	_selection_origin = unit.grid_position
 	_state = State.UNIT_SELECTED
+	# Compute reachable tiles from origin and show immediately — no Move button needed.
+	var reachable := Pathfinder.compute_reachable(_manager.board, _selection_origin, unit.move_budget)
+	_move_targets.clear()
+	for tile in reachable.keys():
+		_move_targets.append(tile)
 	_board_view.clear_highlights()
-	_board_view.set_grid_visible(false)
-	var can_move := not unit.has_acted
-	var can_attack := not unit.has_acted and not _find_attack_targets(unit).is_empty()
-	_menu.show_for_unit(unit, can_move, can_attack)
+	_board_view.set_grid_visible(true)
+	_board_view.highlight_tiles(_move_targets, _MOVE_COLOR)
+	var can_attack := not unit.has_acted
+	_menu.show_for_unit(unit, false, can_attack)
 	if _status_panel != null:
 		_status_panel.show_for_unit(unit)
-
-func _to_unit_selected_or_idle() -> void:
-	# Cancel from a targeting state pops back to the menu if the unit's still actionable;
-	# otherwise drops to idle.
-	_board_view.clear_highlights()
-	if _selected != null and _selected.is_alive() and not _selected.has_acted:
-		_select_unit(_selected)
-	else:
-		_to_idle()
 
 func _to_idle() -> void:
 	_state = State.IDLE
 	_selected = null
+	_selection_origin = Vector2i.ZERO
 	_move_targets.clear()
 	_attack_targets.clear()
 	_menu.hide_menu()
@@ -202,6 +213,31 @@ func _to_idle() -> void:
 		_status_panel.hide_panel()
 	_board_view.clear_highlights()
 	_board_view.set_grid_visible(false)
+
+## Move the selected unit back to _selection_origin, undoing any tentative repositioning.
+func _snap_unit_to_origin() -> void:
+	if _selected == null or _selection_origin == _selected.grid_position:
+		return
+	var board := _manager.board
+	board.get_tile(_selected.grid_position).occupant_id = -1
+	_selected.grid_position = _selection_origin
+	board.get_tile(_selection_origin).occupant_id = _selected.unit_id
+	var view: UnitView3D = _manager.get_view_for(_selected.unit_id)
+	if view != null:
+		view.snap_to_unit()
+
+## Move the selected unit to `grid` directly (bypassing CommandQueue). The highlight
+## tiles remain visible so the player can freely reposition before committing.
+func _do_tentative_move(grid: Vector2i) -> void:
+	if _selected == null or grid == _selected.grid_position:
+		return
+	var board := _manager.board
+	board.get_tile(_selected.grid_position).occupant_id = -1
+	_selected.grid_position = grid
+	board.get_tile(grid).occupant_id = _selected.unit_id
+	var view: UnitView3D = _manager.get_view_for(_selected.unit_id)
+	if view != null:
+		view.snap_to_unit()
 
 func _maybe_end_phase() -> void:
 	if _manager.all_players_acted():
@@ -240,7 +276,8 @@ func _process(_delta: float) -> void:
 	if hovered == null:
 		_damage_preview.hide_preview()
 	else:
-		_damage_preview.show_preview(_selected, hovered, get_viewport().get_mouse_position())
+		_damage_preview.show_preview(_selected, hovered,
+				get_viewport().get_mouse_position(), _manager.board)
 
 func _hovered_target() -> CharacterUnit:
 	var cam := _manager.get_node("../BattleCamera/Pivot/Camera3D") as Camera3D

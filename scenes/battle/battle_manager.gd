@@ -52,29 +52,10 @@ func _bootstrap() -> void:
 	_setup_camera()
 	_setup_test_battle()
 	_tile_input.bind(board, _battle_camera.get_node("Pivot/Camera3D"))
-	# Keep unit Z offsets in sync whenever the player cycles camera presets.
-	_battle_camera.preset_changed.connect(_on_camera_preset_changed)
-	# Apply the correct Z offset for whichever preset the camera already loaded with.
-	var initial_setting: CameraSetting = _battle_camera.settings[_battle_camera.get_current_index()]
-	_push_z_offset_to_views(_compute_unit_z_offset(initial_setting))
 	# Auto-focus the camera on each enemy as their turn starts (player phase stays
 	# user-controlled; F focuses on the selected unit there).
 	CombatEventBus.turn_started.connect(_on_turn_started)
 	start_battle()
-
-func _on_camera_preset_changed(_index: int, setting: CameraSetting) -> void:
-	_push_z_offset_to_views(_compute_unit_z_offset(setting))
-
-func _compute_unit_z_offset(setting: CameraSetting) -> float:
-	# Derive the Z offset that places the sprite center on the tile center in screen space.
-	# Formula: SPRITE_HALF_HEIGHT / sin(|pitch|). pitch is stored as a negative angle in x.
-	var pitch_rad := deg_to_rad(-setting.rotation_angles.x)
-	return UnitView3D.SPRITE_HALF_HEIGHT / max(sin(pitch_rad), 0.001)
-
-func _push_z_offset_to_views(z: float) -> void:
-	for view in _views_by_unit_id.values():
-		if is_instance_valid(view):
-			view.apply_z_offset(z)
 
 func _on_turn_started(unit: CharacterUnit) -> void:
 	if current_phase != Phase.ENEMY:
@@ -93,6 +74,8 @@ func _setup_camera() -> void:
 func _setup_test_battle() -> void:
 	board = Board.create_flat(_BOARD_WIDTH, _BOARD_HEIGHT)
 	_board_view.set_board(board)
+	RollbackService.reset()
+	RollbackService.register_board_source(self, board)
 
 	var aria_def: CharacterDefinition = load(_PLAYER_DEF_PATH)
 	var bandit_def: CharacterDefinition = load(_ENEMY_DEF_PATH)
@@ -170,6 +153,10 @@ func _enter_phase(p: Phase) -> void:
 	if battle_over:
 		return
 
+	# Snapshot board state at the start of the player phase for turn-level rewinds.
+	if p == Phase.PLAYER:
+		RollbackService.snapshot_turn_start()
+
 	# Hand off to AI for the enemy phase. AIController.run_enemy_phase is async; it
 	# calls back to advance_phase() when done.
 	if p == Phase.ENEMY:
@@ -231,6 +218,39 @@ func get_view_for(unit_id: int) -> UnitView3D:
 	if view != null and is_instance_valid(view):
 		return view
 	return null
+
+## Restore board tile state from a snapshot (called by RollbackService.rewind_last_action).
+## Board.units is not @export so it's not in the snapshot; we rebuild it from scene children
+## and update unit grid_positions by reading restored tile occupant_ids.
+func restore_board(snap: Board) -> void:
+	# Restore tile occupancy data in-place (tiles is @export; occupant_ids are preserved).
+	board.tiles = snap.tiles.duplicate(true)
+
+	# Rebuild the live units dict from CharacterUnit children of this node.
+	board.units.clear()
+	for child in get_children():
+		var u := child as CharacterUnit
+		if u == null or not is_instance_valid(u) or u.unit_id < 0:
+			continue
+		board.units[u.unit_id] = u
+
+	# Update unit grid_positions to match restored tile occupancy.
+	for raw_tile in board.tiles:
+		var t := raw_tile as Tile
+		if t == null or t.occupant_id < 0:
+			continue
+		var u := board.units.get(t.occupant_id) as CharacterUnit
+		if u != null:
+			u.grid_position = t.position
+
+	# Reposition all unit views to match restored positions.
+	for unit_id in board.units:
+		var u := board.units[unit_id] as CharacterUnit
+		if u == null:
+			continue
+		var view: UnitView3D = get_view_for(unit_id)
+		if view != null:
+			view.snap_to_unit()
 
 ## True if every player unit has acted this phase. PlayerPhaseController calls this
 ## after each command to auto-advance the phase.

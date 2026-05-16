@@ -6,6 +6,12 @@ class_name BattleConst extends Resource
 @export var min_damage: int = 1
 @export var max_damage: int = 9999
 
+# Hit / crit
+@export var min_hit_chance: int = 5
+@export var max_hit_chance: int = 95
+@export var max_crit_chance: int = 50
+@export var crit_damage_modifier: float = 1.5
+
 # Rollback / rewind
 @export var rollback_save_turn_count: int = 5
 @export var rollback_free_count: int = 3
